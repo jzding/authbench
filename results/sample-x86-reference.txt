@@ -1,0 +1,24 @@
+=== authbench: O-RAN ocloudNotifications v2 auth-overhead microbench (secured PUSH callback) ===
+event payload size: 1043 bytes; bearer token size: 1428 bytes
+
+[1] AES-GCM seal+open per event (steady-state per-message crypto cost):
+  AES-128-GCM                                  n=20000  mean=2.267µs  p50=1.498µs  p99=10.889µs
+  AES-256-GCM                                  n=20000  mean=2.134µs  p50=1.549µs  p99=9.834µs
+
+[2] Full mTLS handshake (one-time per connection; ~0 with keep-alive):
+  TLS1.3 ECDSA-P256                            n=300  mean=1.770798ms  p50=1.745ms  p99=2.887613ms
+  TLS1.3 RSA-2048                              n=300  mean=6.425698ms  p50=6.221587ms  p99=10.685708ms
+  TLS1.2 ECDSA-P256                            n=300  mean=2.104339ms  p50=2.02282ms  p99=3.380476ms
+  TLS1.2 RSA-2048                              n=300  mean=6.493958ms  p50=6.380478ms  p99=9.705646ms
+
+[3] Cached TokenReview check per request (sha256 + mutex map lookup):
+  token cache hit                              n=20000  mean=3.136µs  p50=2.334µs  p99=12.882µs
+
+[4] Per-event POST over a REUSED connection (warm):
+  [4a] plaintext HTTP push (both modes pre-fix) n=10000  mean=218.091µs  p50=180.749µs  p99=661.228µs
+  [4b] HTTPS mTLS push, no handler auth        n=10000  mean=247.732µs  p50=215.325µs  p99=673.778µs
+  [4c] HTTPS mTLS push + callbackAuthMiddleware n=10000  mean=272.823µs  p50=231.204µs  p99=766.16µs
+
+Δ [4c]-[4a] = full secured-push per-event overhead (TLS + client-cert verify + cached token).
+Δ [4c]-[4b] = added cost of the consumer callbackAuthMiddleware over plain HTTPS-mTLS.
+Cold path (cache miss, <=1x per 30s): one Kubernetes TokenReview API round-trip; measured in-cluster.

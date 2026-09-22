@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="1050" viewBox="0 0 1300 1050" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#334155"/>
+    </marker>
+    <marker id="arrRed" markerWidth="11" markerHeight="11" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#dc2626"/>
+    </marker>
+    <marker id="arrGray" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1300" height="1050" fill="#ffffff"/>
+
+  <!-- Header -->
+  <text x="650" y="36" text-anchor="middle" font-size="25" font-weight="700" fill="#0f172a">authbench — microbench architecture &amp; the measured latency path</text>
+  <text x="650" y="62" text-anchor="middle" font-size="14" fill="#475569">O-RAN ocloudNotifications v2 · mTLS + OAuth auth-cost microbenchmark · pure Go stdlib · loopback only (no network / CNI / kube-apiserver in the hot path)</text>
+
+  <!-- Legend -->
+  <g font-size="12.5">
+    <rect x="40" y="78" width="18" height="12" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+    <text x="64" y="88" fill="#0f172a">red = the end-to-end path being timed ( t := time.Now() … ds[i] = time.Since(t) )</text>
+    <line x1="640" y1="84" x2="672" y2="84" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrGray)"/>
+    <text x="680" y="88" fill="#0f172a">dashed grey = shared setup (certs / token cache), NOT on the timed path</text>
+  </g>
+
+  <!-- ================= [4] END-TO-END PROCESS BOX ================= -->
+  <rect x="40" y="105" width="1220" height="590" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="7 5"/>
+  <text x="60" y="130" font-size="15" font-weight="700" fill="#334155">[4] Per-event POST over a REUSED connection — the end-to-end measurement (single Go process, 127.0.0.1)</text>
+  <text x="60" y="150" font-size="12.5" fill="#64748b">benchPOST(): 200 warm-up requests prime one keep-alive TLS connection, then n = 10,000 timed round-trips → p50 / p99</text>
+
+  <!-- Measured-path badge -->
+  <rect x="500" y="168" width="300" height="26" rx="13" fill="#fee2e2" stroke="#dc2626" stroke-width="1.4"/>
+  <text x="650" y="186" text-anchor="middle" font-size="13" font-weight="700" fill="#b91c1c">MEASURED: warm per-event round-trip</text>
+
+  <!-- CLIENT CARD -->
+  <rect x="70" y="210" width="320" height="250" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="230" y="234" text-anchor="middle" font-size="16" font-weight="700" fill="#1d4ed8">HTTP client  (tlsClient)</text>
+  <line x1="86" y1="244" x2="374" y2="244" stroke="#bfdbfe" stroke-width="1.4"/>
+  <g font-size="12.5" fill="#1e3a5f">
+    <text x="88" y="266">• build POST: 1043-B CloudEvent body</text>
+    <text x="88" y="288">• attach client cert + Bearer token</text>
+    <text x="88" y="315" font-weight="700" fill="#0f172a">• TLS 1.3 encrypt — AES-GCM record</text>
+    <text x="88" y="340">• HTTP/1.1 pinned (ForceAttemptHTTP2=false)</text>
+    <text x="88" y="362">• MaxIdleConnsPerHost: 1</text>
+    <text x="88" y="384" font-weight="700" fill="#0f172a">• reuses ONE warm TLS connection</text>
+  </g>
+  <!-- stopwatch markers on client -->
+  <circle cx="112" cy="424" r="9" fill="#fff" stroke="#dc2626" stroke-width="2"/>
+  <line x1="112" y1="424" x2="112" y2="418" stroke="#dc2626" stroke-width="2"/>
+  <line x1="112" y1="424" x2="116" y2="426" stroke="#dc2626" stroke-width="2"/>
+  <text x="128" y="421" font-size="12.5" font-weight="700" fill="#b91c1c">t := time.Now()</text>
+  <text x="128" y="437" font-size="12.5" font-weight="700" fill="#b91c1c">ds[i] = time.Since(t)</text>
+
+  <!-- SERVER CARD -->
+  <rect x="820" y="205" width="390" height="345" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+  <text x="1015" y="229" text-anchor="middle" font-size="16" font-weight="700" fill="#047857">loopback TLS server  (127.0.0.1:port)</text>
+
+  <!-- server: TLS layer -->
+  <rect x="840" y="242" width="350" height="52" rx="7" fill="#d1fae5" stroke="#10b981" stroke-width="1.3"/>
+  <text x="1015" y="262" text-anchor="middle" font-size="13" font-weight="700" fill="#065f46">TLS 1.3 layer</text>
+  <text x="1015" y="281" text-anchor="middle" font-size="12" fill="#065f46">RequireAndVerifyClientCert · AES-GCM decrypt</text>
+
+  <!-- server: middleware -->
+  <rect x="840" y="312" width="350" height="88" rx="7" fill="#fef3c7" stroke="#d97706" stroke-width="1.6"/>
+  <text x="1015" y="333" text-anchor="middle" font-size="13.5" font-weight="700" fill="#92400e">callbackAuthMiddleware  (app-layer auth)</text>
+  <text x="855" y="356" font-size="12.5" fill="#78350f">① require verified peer cert (r.TLS.PeerCertificates)</text>
+  <text x="855" y="377" font-size="12.5" fill="#78350f">② tokenCache.check(Bearer)  → sha256 + map lookup</text>
+  <text x="855" y="394" font-size="11.5" font-style="italic" fill="#a16207">present only in variant [4c]</text>
+
+  <!-- server: handler -->
+  <rect x="840" y="418" width="350" height="48" rx="7" fill="#dcfce7" stroke="#16a34a" stroke-width="1.3"/>
+  <text x="1015" y="447" text-anchor="middle" font-size="13.5" font-weight="700" fill="#166534">handler → 204 No Content</text>
+
+  <!-- request / response arrows (RED = measured) -->
+  <line x1="390" y1="300" x2="818" y2="300" stroke="#dc2626" stroke-width="3" marker-end="url(#arrRed)"/>
+  <text x="604" y="290" text-anchor="middle" font-size="13" font-weight="700" fill="#b91c1c">POST /event  (encrypted request)</text>
+  <text x="604" y="318" text-anchor="middle" font-size="11.5" fill="#64748b">over the single reused loopback TCP/TLS connection (keep-alive)</text>
+
+  <line x1="818" y1="392" x2="392" y2="392" stroke="#dc2626" stroke-width="3" marker-end="url(#arrRed)"/>
+  <text x="604" y="384" text-anchor="middle" font-size="13" font-weight="700" fill="#b91c1c">HTTP 204  (encrypted response)</text>
+
+  <!-- ================= SHARED SETUP (not timed) ================= -->
+  <rect x="70" y="490" width="360" height="185" rx="10" fill="#faf5ff" stroke="#a78bfa" stroke-width="1.8"/>
+  <text x="250" y="514" text-anchor="middle" font-size="14.5" font-weight="700" fill="#6d28d9">Shared CA + certs  (newCA / issue)</text>
+  <g font-size="12.5" fill="#4c1d95">
+    <text x="88" y="540">• self-signed ECDSA-P256 CA</text>
+    <text x="88" y="562">• server leaf (ECDSA or RSA, SAN localhost)</text>
+    <text x="88" y="584">• client leaf (CN=cloud-event-consumer)</text>
+    <text x="88" y="606">• one x509.CertPool shared by both ends</text>
+    <text x="88" y="632" font-style="italic" fill="#7c3aed">built once at startup — outside the timed loop</text>
+  </g>
+
+  <rect x="470" y="490" width="330" height="185" rx="10" fill="#faf5ff" stroke="#a78bfa" stroke-width="1.8"/>
+  <text x="635" y="514" text-anchor="middle" font-size="14.5" font-weight="700" fill="#6d28d9">tokenCache  (OAuth steady state)</text>
+  <g font-size="12.5" fill="#4c1d95">
+    <text x="488" y="540">• map[[32]byte]time.Time + RWMutex</text>
+    <text x="488" y="562">• 30 s TTL; check = sha256(token) + RLock</text>
+    <text x="488" y="584">• models a TokenReview cache HIT</text>
+    <text x="488" y="611" font-style="italic" fill="#7c3aed">cold path (cache miss → real TokenReview</text>
+    <text x="488" y="629" font-style="italic" fill="#7c3aed">API RTT, ≤1×/30s) measured in-cluster, not here</text>
+  </g>
+
+  <!-- dashed connectors from shared to client/server/middleware -->
+  <path d="M250,490 L250,470 L230,470 L230,462" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrGray)"/>
+  <path d="M430,520 C560,500 700,360 838,332" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrGray)"/>
+  <path d="M430,560 C620,560 760,300 838,278" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arrGray)"/>
+
+  <!-- ================= COMPONENT-COST CARDS [1][2][3] ================= -->
+  <text x="40" y="735" font-size="15" font-weight="700" fill="#334155">Isolated component costs (measured separately, so each cost is attributable — reference p50, x86)</text>
+
+  <!-- [1] AES-GCM -->
+  <rect x="40" y="750" width="290" height="205" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="185" y="775" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">[1] AES-GCM  seal+open</text>
+  <text x="185" y="795" text-anchor="middle" font-size="12" fill="#64748b">per-message bulk crypto (every event)</text>
+  <g font-size="12.5" fill="#1e293b">
+    <text x="58" y="822">benchAESGCM(): Seal + Open</text>
+    <text x="58" y="844">the 1043-B payload, n = 20,000</text>
+    <text x="58" y="866">no server / no certs needed</text>
+  </g>
+  <rect x="58" y="884" width="254" height="52" rx="6" fill="#e2e8f0"/>
+  <text x="185" y="906" text-anchor="middle" font-size="13.5" font-weight="700" fill="#0f172a">AES-128  p50 ≈ 1.5 µs</text>
+  <text x="185" y="925" text-anchor="middle" font-size="12" fill="#475569">not the cost driver</text>
+
+  <!-- [2] handshake -->
+  <rect x="350" y="750" width="300" height="205" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="500" y="775" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">[2] Full mTLS handshake</text>
+  <text x="500" y="795" text-anchor="middle" font-size="12" fill="#64748b">one-time per connection (~0 with keep-alive)</text>
+  <g font-size="12.5" fill="#1e293b">
+    <text x="368" y="822">benchHandshake(): fresh net.Dial</text>
+    <text x="368" y="844">each iter, times Handshake() only</text>
+    <text x="368" y="866">2×2 = {TLS1.3,1.2}×{ECDSA,RSA}</text>
+  </g>
+  <rect x="368" y="884" width="264" height="52" rx="6" fill="#e2e8f0"/>
+  <text x="500" y="906" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">ECDSA-P256 p50 ≈ 1.7 ms</text>
+  <text x="500" y="925" text-anchor="middle" font-size="12" fill="#475569">≈ 4× faster than RSA-2048 (6.2 ms)</text>
+
+  <!-- [3] token cache -->
+  <rect x="670" y="750" width="270" height="205" rx="10" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+  <text x="805" y="775" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">[3] Cached token check</text>
+  <text x="805" y="795" text-anchor="middle" font-size="12" fill="#64748b">every request, but cache HIT</text>
+  <g font-size="12.5" fill="#1e293b">
+    <text x="688" y="822">benchTokenCache(): times</text>
+    <text x="688" y="844">check() = sha256 + RLock +</text>
+    <text x="688" y="866">TTL compare, n = 20,000</text>
+  </g>
+  <rect x="688" y="884" width="234" height="52" rx="6" fill="#e2e8f0"/>
+  <text x="805" y="906" text-anchor="middle" font-size="13.5" font-weight="700" fill="#0f172a">p50 ≈ 2.3 µs</text>
+  <text x="805" y="925" text-anchor="middle" font-size="12" fill="#475569">no per-event API round-trip</text>
+
+  <!-- [4] variants + deltas -->
+  <rect x="960" y="750" width="300" height="260" rx="10" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+  <text x="1110" y="775" text-anchor="middle" font-size="15" font-weight="700" fill="#c2410c">[4] Round-trip variants → the headline</text>
+  <g font-size="12.5" fill="#7c2d12">
+    <text x="978" y="800">[4a] plaintext HTTP push</text>
+    <text x="1242" y="800" text-anchor="end" font-weight="700">p50 181 µs</text>
+    <text x="978" y="824">[4b] HTTPS-mTLS, no app-auth</text>
+    <text x="1242" y="824" text-anchor="end" font-weight="700">p50 215 µs</text>
+    <text x="978" y="848">[4c] HTTPS-mTLS + callbackAuth</text>
+    <text x="1242" y="848" text-anchor="end" font-weight="700">p50 231 µs</text>
+  </g>
+  <line x1="978" y1="862" x2="1242" y2="862" stroke="#fdba74" stroke-width="1.4"/>
+  <rect x="978" y="872" width="264" height="60" rx="6" fill="#ffedd5"/>
+  <text x="988" y="893" font-size="12.5" font-weight="700" fill="#9a3412">Δ[4c]−[4a] = +50 µs</text>
+  <text x="1234" y="893" text-anchor="end" font-size="11.5" fill="#9a3412">full secured push</text>
+  <text x="988" y="915" font-size="12.5" font-weight="700" fill="#9a3412">Δ[4c]−[4b] = +16 µs</text>
+  <text x="1234" y="915" text-anchor="end" font-size="11.5" fill="#9a3412">app-layer auth only</text>
+  <text x="1110" y="955" text-anchor="middle" font-size="11.5" font-style="italic" fill="#c2410c">latency = the [4] round-trip;</text>
+  <text x="1110" y="972" text-anchor="middle" font-size="11.5" font-style="italic" fill="#c2410c">overhead = the difference between variants</text>
+  <text x="1110" y="994" text-anchor="middle" font-size="11.5" fill="#78716c">absolute secured delivery ≈ 0.24 ms</text>
+
+  <!-- footer -->
+  <text x="40" y="1035" font-size="12" fill="#94a3b8">The timed span (red) is exactly one client.Do() over a warm connection: encrypt → loopback → TLS decrypt → [4c: cert + token check] → 204 → back. Handshake [2] is excluded by connection reuse; token cold-path is excluded by the cache.</text>
+</svg>
