@@ -95,7 +95,7 @@ new each time, this isolates the *one-time* connection-setup cost.
 Run as a 2×2 matrix — {TLS 1.3, TLS 1.2} × {ECDSA-P256 server cert, RSA-2048 server
 cert} — by pinning `MinVersion == MaxVersion` and swapping the server leaf's key
 type. The point of the matrix: **ECDSA is ~4× faster than RSA** (1.77 ms vs 6.4 ms),
-and OpenShift Service-CA issues **ECDSA** serving certs, so the fast row is the one
+and typical platform Service CAs issue **ECDSA** serving certs, so the fast row is the one
 that applies in production. RSA is shown to justify "don't switch to RSA certs."
 
 ### [3] Cached TokenReview check — `benchTokenCache()` ([main.go:223](./main.go))
