@@ -4,9 +4,9 @@ Source: [`main.go`](./main.go) · sample output: [`results/sample-x86-reference.
 
 ## 1. Why this exists
 
-The O-RAN ocloudNotifications v2 secured build adds mTLS + OAuth to all O-RAN ocloudNotifications v2 APIs. The O-RAN
-forum question is: *what does that authentication cost per event?* We need a
-defensible per-request number.
+Securing the O-RAN ocloudNotifications v2 interface adds mTLS + OAuth to all of its
+APIs. The forum question is: *what does that authentication cost per event?* We need
+a defensible per-request number.
 
 The obvious approach — measure delivery latency on the cluster with auth on vs off
 — **does not work at this scale**. The in-node event hop is sub-millisecond, while
@@ -46,7 +46,7 @@ build fixed-size payload (1043 B) + token (1428 B)
   ├─ build one shared CA + certs      → newCA(), issue()
   │      ├─ server leaf, ECDSA-P256
   │      ├─ server leaf, RSA-2048
-  │      └─ client leaf, ECDSA-P256 (CN=cloud-event-consumer)
+  │      └─ client leaf, ECDSA-P256 (CN=notification-consumer)
   │
   ├─ [2] full mTLS handshake          → benchHandshake()     (TLS1.3/1.2 × ECDSA/RSA)
   ├─ [3] cached TokenReview check     → benchTokenCache()    (tokenCache)
@@ -70,7 +70,7 @@ parts, and lumping them hides which ones actually matter in steady state:
 | 3 | OAuth token check | **every request**, but cached (30 s TTL) | sha256 + map lookup |
 | 4 | End-to-end POST | **every event**, warm connection | round-trip over reused conn |
 
-Separating them lets the report say "handshake is 1.7 ms but amortizes to zero, so
+Separating them lets us say "handshake is 1.7 ms but amortizes to zero, so
 the *steady-state* per-event cost is [1]+[3]+framing ≈ tens of µs," which is the
 honest conclusion.
 
@@ -95,7 +95,7 @@ new each time, this isolates the *one-time* connection-setup cost.
 Run as a 2×2 matrix — {TLS 1.3, TLS 1.2} × {ECDSA-P256 server cert, RSA-2048 server
 cert} — by pinning `MinVersion == MaxVersion` and swapping the server leaf's key
 type. The point of the matrix: **ECDSA is ~4× faster than RSA** (1.77 ms vs 6.4 ms),
-and typical platform Service CAs issue **ECDSA** serving certs, so the fast row is the one
+and typical in-cluster certificate authorities issue **ECDSA** serving certs, so the fast row is the one
 that applies in production. RSA is shown to justify "don't switch to RSA certs."
 
 ### [3] Cached TokenReview check — `benchTokenCache()` ([main.go:223](./main.go))
@@ -114,8 +114,8 @@ output's closing line says so explicitly.
 
 ### [4] Per-event POST over a reused connection — `benchPOST()` ([main.go:312](./main.go))
 
-The end-to-end steady-state number, and the one the report's push-overhead deltas
-come from. Three server/client configurations, all POSTing the 1043-byte body:
+The end-to-end steady-state number, and the one the push-overhead deltas come from.
+Three server/client configurations, all POSTing the 1043-byte body:
 
 - **[4a] plaintext** — `newPlainServer()` ([main.go:239](./main.go)), handler returns 204. Baseline.
 - **[4b] HTTPS + mTLS, no app auth** — `newTLSServer(..., withAuth=false)` ([main.go:252](./main.go)): `RequireAndVerifyClientCert`, handler returns 204. Adds TLS record crypto + client-cert verification, but no application-layer check.
@@ -157,8 +157,8 @@ the composed warm per-event POST cost. These are arch-real (run on x86) and
 noise-free.
 
 **Does not prove:** absolute production latency (no CNI, no scheduler, no
-kube-apiserver, no real GNSS→daemon→cep→consumer path), and not the cold
-TokenReview round-trip. Those belong to the in-cluster A/B and are quoted
+kube-apiserver, no real event-source→producer→consumer path), and not the cold
+TokenReview round-trip. Those belong to an in-cluster measurement and are quoted
 separately. The microbench answers "how expensive is the *auth*," not "how fast is
 the *system*."
 

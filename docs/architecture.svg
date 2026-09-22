@@ -87,7 +87,7 @@
   <g font-size="12.5" fill="#4c1d95">
     <text x="88" y="540">• self-signed ECDSA-P256 CA</text>
     <text x="88" y="562">• server leaf (ECDSA or RSA, SAN localhost)</text>
-    <text x="88" y="584">• client leaf (CN=cloud-event-consumer)</text>
+    <text x="88" y="584">• client leaf (CN=notification-consumer)</text>
     <text x="88" y="606">• one x509.CertPool shared by both ends</text>
     <text x="88" y="632" font-style="italic" fill="#7c3aed">built once at startup — outside the timed loop</text>
   </g>

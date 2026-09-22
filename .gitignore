@@ -1,4 +1,5 @@
 /authbench
+/authbench-push
 *.test
 *.out
 .DS_Store

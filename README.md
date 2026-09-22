@@ -94,7 +94,6 @@ is the *system*."
 
 - [`DESIGN.md`](./DESIGN.md) — full design and per-measurement rationale
 - [`docs/architecture.svg`](./docs/architecture.svg) — what the microbench isolates (the timed path)
-- [`docs/architecture-incluster.svg`](./docs/architecture-incluster.svg) — how those legs map onto the real in-cluster producer→consumer path
 
 ## License
 

@@ -15,4 +15,4 @@ The bottom row makes the attribution explicit:
 - [1] AES-GCM ~1.5 µs, [2] ECDSA handshake ~1.7 ms, [3] cached token ~2.3 µs — each measured in isolation.
 - [4] variants are the end-to-end round-trip: [4a] plaintext 181 µs → [4b] HTTPS-mTLS 215 µs → [4c] +callback-auth 231 µs. The latency is the round-trip; the overhead is the delta between variants — Δ = +50 µs (full secured push), +16 µs (app-layer auth alone).
 
-This matches the DESIGN.md structure and the deck's slide 5.
+This matches the DESIGN.md structure.

@@ -3,7 +3,7 @@
 //
 // Pure Go stdlib, no cluster needed. Run on x86 to match a typical cluster
 // arch. Measures the four
-// per-request auth costs the report quotes:
+// per-request auth costs:
 //
 //	[1] AES-GCM seal+open per event   (steady-state per-message crypto)
 //	[2] Full mTLS handshake           (one-time per connection; ~0 with keep-alive)
@@ -60,7 +60,7 @@ func main() {
 	pool.AddCert(caCert)
 	srvECDSA := issue(caCert, caKey, "localhost", true, false)
 	srvRSA := issue(caCert, caKey, "localhost", true, true)
-	cliCert := issue(caCert, caKey, "cloud-event-consumer", false, false)
+	cliCert := issue(caCert, caKey, "notification-consumer", false, false)
 
 	// ---- [2] Full mTLS handshake -----------------------------------------
 	fmt.Println("[2] Full mTLS handshake (one-time per connection; ~0 with keep-alive):")
@@ -85,7 +85,7 @@ func main() {
 	fmt.Println()
 
 	fmt.Println("Δ [4c]-[4a] = full secured-push per-event overhead (TLS + client-cert verify + cached token).")
-	fmt.Println("Δ [4c]-[4b] = added cost of the consumer callbackAuthMiddleware over plain HTTPS-mTLS.")
+	fmt.Println("Δ [4c]-[4b] = added cost of the callbackAuthMiddleware over plain HTTPS-mTLS.")
 	fmt.Println("Cold path (cache miss, <=1x per 30s): one Kubernetes TokenReview API round-trip; measured in-cluster.")
 }
 
