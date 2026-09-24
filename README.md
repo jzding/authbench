@@ -1,6 +1,6 @@
 # authbench
 
-A small, **platform-neutral microbenchmark** of the per-event CPU cost of adding
+A small, **platform-neutral microbenchmark** of the per-event latency cost of adding
 **mutual TLS + OAuth** to the O-RAN *ocloudNotifications v2* notification interface
 (the secured event-**push** callback in particular).
 
